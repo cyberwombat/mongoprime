@@ -1,5 +1,5 @@
 {
-  "name": "mongo-prime",
+  "name": "mongo-primer",
   "version": "0.0.1",
   "description": "A simple E6S fixture loader for Mongo baed testing",
   "main": "lib/index.js",
@@ -28,7 +28,7 @@
   },
   "scripts": {
     "test": "mocha --compilers js:babel-register test/index.spec.js",
-    "build":  "babel src --out-dir dist",
+    "build": "babel src --out-dir dist",
     "prepublish": "npm run build"
   },
   "keywords": [
@@ -41,5 +41,13 @@
     "e2e"
   ],
   "author": "Aruga Sidamo",
-  "license": "ISC"
+  "license": "ISC",
+  "homepage": "https://github.com/cyberwombat/mongo-primer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cyberwombat/mongo-primer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cyberwombat/mongo-primer/issues"
+  }
 }

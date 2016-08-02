@@ -1,7 +1,7 @@
 # Mongo Primer
 
 ## Description
-A simple ES6 module for loading fixtures in Mongo for testing.
+A simple  module for loading fixtures in Mongo for testing.
 
 ## Installation
 

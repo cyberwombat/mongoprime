@@ -22,7 +22,7 @@ Setup a fixture named with your collection
 
 Then in your tests:
 
-    import Loader from 'mongo-loader'
+    import Loader from 'mongo-primer'
     import fixtures from './fixtures'
     
     let loader

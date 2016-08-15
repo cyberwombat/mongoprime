@@ -1,6 +1,6 @@
 {
   "name": "mongo-primer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A simple E6S fixture loader for Mongo baed testing",
   "main": "dist/index.js",
   "directories": {

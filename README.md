@@ -73,4 +73,7 @@ Multiple collections can be provided at once:
 ## Todo
 This is a preliminary release. Needs more tests.
 
+## Changelog
 
+####0.1.0
+- Add a check to prevent database clearing when in production mode

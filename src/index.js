@@ -1,6 +1,8 @@
 import mongo from 'mongodb'
 import _ from 'lodash'
 
+const env = process.env.NODE_ENV || 'development'
+
 export default class Loader {
   constructor(options) {
     this.options = _.merge({
@@ -10,6 +12,7 @@ export default class Loader {
   }
 
   clearCollections(collections) {
+    if(env === 'production') return Promise.reject(new Error('Production mode on - cannot clear database'))
     return this.getConnection().then((db) => {
       return this.getCollections().then((names) => {
         collections = _.compact(_.castArray(collections))

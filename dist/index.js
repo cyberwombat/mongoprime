@@ -18,6 +18,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var env = process.env.NODE_ENV || 'development';
+
 var Loader = function () {
   function Loader(options) {
     _classCallCheck(this, Loader);
@@ -33,6 +35,7 @@ var Loader = function () {
     value: function clearCollections(collections) {
       var _this = this;
 
+      if (env === 'production') return Promise.reject(new Error('Production mode on - cannot clear database'));
       return this.getConnection().then(function (db) {
         return _this.getCollections().then(function (names) {
           collections = _lodash2.default.compact(_lodash2.default.castArray(collections));

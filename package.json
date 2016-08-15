@@ -40,12 +40,12 @@
     "unit",
     "e2e"
   ],
-  "author": "Aruga Sidamo",
+  "author": "Yashua Savage",
   "license": "ISC",
   "homepage": "https://github.com/cyberwombat/mongo-primer",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cyberwombat/mongo-primer.git"
+    "url": "git+https://github.com/cyberwombat/mongo-primer.git"
   },
   "bugs": {
     "url": "https://github.com/cyberwombat/mongo-primer/issues"

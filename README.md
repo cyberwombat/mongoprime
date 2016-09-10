@@ -42,17 +42,16 @@ Then in your tests:
 
 ## API
 
-####`clearData()`
-Clears all collections.
-
 ####`clearAndLoad(fixtures)`
 Clears given collections and loads fixtures.
 
 ####`loadData(fixtures)`
 Load fixture data without removing old entries.
 
-####`clearCollections()`
-Clear all collections.
+####`clearCollections([collections])`
+Clear all collections or given collections by name if given
+
+**Note:** collections prefixed by _system_ or _local_ are ignored. Additionally, as a safety measure, nothing will happen in production mode (not that this has _ever_ happened to me...)
 
 ## Fixture format
 

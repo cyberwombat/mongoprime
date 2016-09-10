@@ -8,13 +8,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _mongodb = require('mongodb');
 
-var _mongodb2 = _interopRequireDefault(_mongodb);
-
 var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -24,7 +18,7 @@ var Loader = function () {
   function Loader(options) {
     _classCallCheck(this, Loader);
 
-    this.options = _lodash2.default.merge({
+    this.options = (0, _lodash.merge)({
       drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
       ignore: /^(system|local)\./ // Regex of collection names to ignore
     }, options);
@@ -38,8 +32,8 @@ var Loader = function () {
       if (env === 'production') return Promise.reject(new Error('Production mode on - cannot clear database'));
       return this.getConnection().then(function (db) {
         return _this.getCollections().then(function (names) {
-          collections = _lodash2.default.compact(_lodash2.default.castArray(collections));
-          var filtered = collections.length ? _lodash2.default.intersection(names, _lodash2.default.castArray(collections)) : names;
+          collections = (0, _lodash.compact)((0, _lodash.castArray)(collections));
+          var filtered = collections.length ? (0, _lodash.intersection)(names, (0, _lodash.castArray)(collections)) : names;
           return Promise.all(filtered.map(function (name) {
             return _this.options.drop ? db.collection(name).drop() : db.collection(name).remove({});
           }));
@@ -60,13 +54,13 @@ var Loader = function () {
   }, {
     key: 'closeConnection',
     value: function closeConnection() {
-      if (!this.connection) throw new Error('No connection found!');
+      if (this.connection) return Promise.resolve();
       return this.connection.close();
     }
   }, {
     key: 'getConnection',
     value: function getConnection() {
-      if (!this.client) this.client = _mongodb2.default.MongoClient.connect(this.options.uri);
+      if (!this.client) this.client = _mongodb.MongoClient.connect(this.options.uri);
       return this.client;
     }
   }, {
@@ -94,7 +88,7 @@ var Loader = function () {
         _this4.connection = db;
         var promises = collectionNames.map(function (name) {
           var collectionData = data[name];
-          var items = _lodash2.default.isArray(collectionData) ? collectionData.slice() : _lodash2.default.values(collectionData);
+          var items = (0, _lodash.isArray)(collectionData) ? collectionData.slice() : (0, _lodash.values)(collectionData);
           return _this4.connection.collection(name).insert(items);
         });
 

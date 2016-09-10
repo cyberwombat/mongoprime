@@ -33,8 +33,7 @@ export default class Loader {
   }
 
   closeConnection () {
-    if (this.connection) return Promise.resolve()
-    return this.connection.close()
+    if (this.connection) return this.connection.close()
   }
 
   getConnection () {

@@ -54,8 +54,7 @@ var Loader = function () {
   }, {
     key: 'closeConnection',
     value: function closeConnection() {
-      if (this.connection) return Promise.resolve();
-      return this.connection.close();
+      if (this.connection) return this.connection.close();
     }
   }, {
     key: 'getConnection',

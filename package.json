@@ -8,18 +8,18 @@
   },
   "babel": {
     "presets": [
-      "es2015",
-      "stage-0"
+      "es2015"
     ]
   },
   "dependencies": {
-    "lodash": "^4.15.0",
+    "lodash": "^4.15.0"
+  },
+  "optionalDependencies": {
     "mongodb": "^2.2.9"
   },
   "devDependencies": {
     "babel-cli": "^6.14.0",
     "babel-preset-es2015": "^6.14.0",
-    "babel-preset-stage-0": "^6.5.0",
     "babel-register": "^6.14.0",
     "chai": "^3.5.0",
     "mocha": "^3.0.2"

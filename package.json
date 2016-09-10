@@ -1,6 +1,6 @@
 {
   "name": "mongo-primer",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A simple fixture loader for Mongo based testing",
   "main": "dist/index.js",
   "directories": {

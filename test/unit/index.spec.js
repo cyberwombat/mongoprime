@@ -1,7 +1,7 @@
-import { expect } from 'chai'
-import Loader from '../src/index'
-import fixtures from './fixtures'
-
+/* globals before, after, beforeEach, it */
+const { expect } = require('chai')
+const Loader = require('../../index')
+const fixtures = require('../fixtures')
 
 let loader
 
@@ -22,8 +22,8 @@ it('should load a single fixture', () => {
     return loader.getConnection().then(db => {
       return db.collection('kittens').find().toArray().then(kittens => {
         expect(kittens).to.have.length(4)
-      }).then(() =>  {
-         return loader.getCollections().then(names => {
+      }).then(() => {
+        return loader.getCollections().then(names => {
           expect(names).to.eql(['kittens'])
         })
       })
@@ -32,13 +32,13 @@ it('should load a single fixture', () => {
 })
 
 it('should load multiple fixture', () => {
-  return loader.clearAndLoad(fixtures).then(() =>  {
+  return loader.clearAndLoad(fixtures).then(() => {
     return loader.getConnection().then(db => {
       return db.collection('kittens').find().toArray().then(kittens => {
         expect(kittens).to.have.length(4)
-      }).then(() =>  {
-         return loader.getCollections().then(names => {
-           expect(names).to.eql(['kittens', 'puppies'])
+      }).then(() => {
+        return loader.getCollections().then(names => {
+          expect(names).to.eql(['kittens', 'puppies'])
         })
       })
     })

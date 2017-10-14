@@ -1,9 +1,9 @@
-import { MongoClient } from 'mongodb'
-import { isArray, castArray, values, intersection, compact, merge } from 'lodash'
+const { MongoClient } = require('mongodb')
+const { isArray, castArray, values, intersection, compact, merge } = require('lodash')
 
 const env = process.env.NODE_ENV || 'development'
 
-export default class Loader {
+module.exports = class Loader {
   constructor (options) {
     this.options = merge({
       drop: false, // Drop collections instead of emptying them (drop() vs remove({}))

@@ -29,10 +29,10 @@ Then in your tests:
     const MongoPrimer = require('mongo-primer')
     const fixtures = require('./fixtures')
          
-    let MongoPrimer = new MongoPrimer()
-    test.before(t => MongoPrimer.startServer())
-    test.after(t => MongoPrimer.stopServer())
-    test.beforeEach(() => MongoPrimer.clearAndLoad(fixtures))
+    let loader = new MongoPrimer()
+    test.before(t => loader.startServer())
+    test.after(t => loader.stopServer())
+    test.beforeEach(() => loader.clearAndLoad(fixtures))
  
 
 ## API

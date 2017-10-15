@@ -1,8 +1,8 @@
 const test = require('ava')
-const Loader = require('../../index')
+const MongoPrimer = require('../../index')
 const fixtures = require('../fixtures')
 
-let loader = new Loader()
+let loader = new MongoPrimer()
 
 test.before(() => loader.startServer())
 

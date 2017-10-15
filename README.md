@@ -1,16 +1,20 @@
 # Mongo Primer
 
 ## Description
-A simple  module for loading fixtures in Mongo for testing. It makes use of mongo prebuilt and loads data in memory using ephemeralForTest as the storage engine.
+A simple module for loading fixtures in Mongo for testing using mongo prebuilt and loads data in memory using ephemeralForTest as the storage engine.
 
 
 ## Installation
 
-    npm i --save-dev mongo-primer
+    npm i mongo-primer --save-dev
+
+or:
+
+    yarn add mongo-primer -D
 
 ## Usage
 
-Setup a fixture named with your collection
+Setup a fixture named with your collection:
 
     // fixtures.js
     exports.kittens = [

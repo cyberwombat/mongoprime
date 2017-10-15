@@ -26,13 +26,13 @@ Setup a fixture named with your collection:
 
 Then in your tests:
 
-    const Loader = require('mongo-primer')
+    const MongoPrimer = require('mongo-primer')
     const fixtures = require('./fixtures')
          
-    let loader = new Loader()
-    test.before(t => loader.startServer())
-    test.after(t => loader.stopServer())
-    test.beforeEach(() => loader.clearAndLoad(fixtures))
+    let MongoPrimer = new MongoPrimer()
+    test.before(t => MongoPrimer.startServer())
+    test.after(t => MongoPrimer.stopServer())
+    test.beforeEach(() => MongoPrimer.clearAndLoad(fixtures))
  
 
 ## API
@@ -83,3 +83,6 @@ Multiple collections can be provided at once:
 #### 0.4.0
 - Switched to mongo prebuild with mem storage.
 - Switched to AVA for tests.
+
+#### 0.4.1
+- Renamed class

@@ -3,7 +3,7 @@ const mkdirp = require('mkdirp')
 const MongodbPrebuilt = require('mongodb-prebuilt')
 const { isArray, castArray, values, intersection, compact, merge } = require('lodash')
 
-module.exports = class Loader {
+module.exports = class MongoPrimer {
   constructor (options) {
     this.options = merge({
       port: 27018,

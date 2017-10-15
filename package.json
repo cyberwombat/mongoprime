@@ -1,6 +1,6 @@
 {
   "name": "mongo-primer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A simple fixture loader for in memory Mongo based testing.",
   "main": "index.js",
   "directories": {

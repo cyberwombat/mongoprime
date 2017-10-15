@@ -1,44 +1,35 @@
-/* globals before, after, beforeEach, it */
-const { expect } = require('chai')
+const test = require('ava')
 const Loader = require('../../index')
 const fixtures = require('../fixtures')
 
-let loader
+let loader = new Loader()
 
-before(() => {
-  loader = new Loader({ uri: 'mongodb://127.0.0.1/mongoloader', drop: true })
-})
+test.before(() => loader.startServer())
 
-after(() => {
-  return loader.closeConnection()
-})
+test.after(() => loader.stopServer())
 
-beforeEach(() => {
-  return loader.clearCollections()
-})
-
-it('should load a single fixture', () => {
+test.serial('should load a single fixture', (t) => {
   return loader.clearAndLoad({ kittens: fixtures.kittens }).then(() => {
-    return loader.getConnection().then(db => {
+    return loader.getCurrentConnection().then(db => {
       return db.collection('kittens').find().toArray().then(kittens => {
-        expect(kittens).to.have.length(4)
+        t.is(kittens.length, 4)
       }).then(() => {
         return loader.getCollections().then(names => {
-          expect(names).to.eql(['kittens'])
+          t.deepEqual(names, ['kittens'])
         })
       })
     })
   })
 })
 
-it('should load multiple fixture', () => {
+test.serial('should load multiple fixture', (t) => {
   return loader.clearAndLoad(fixtures).then(() => {
-    return loader.getConnection().then(db => {
+    return loader.getCurrentConnection().then(db => {
       return db.collection('kittens').find().toArray().then(kittens => {
-        expect(kittens).to.have.length(4)
+        t.is(kittens.length, 4)
       }).then(() => {
         return loader.getCollections().then(names => {
-          expect(names).to.eql(['kittens', 'puppies'])
+          t.deepEqual(names.sort(), ['kittens', 'puppies'])
         })
       })
     })

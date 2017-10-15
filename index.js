@@ -1,19 +1,27 @@
 const { MongoClient } = require('mongodb')
+const mkdirp = require('mkdirp')
+const MongodbPrebuilt = require('mongodb-prebuilt')
 const { isArray, castArray, values, intersection, compact, merge } = require('lodash')
-
-const env = process.env.NODE_ENV || 'development'
 
 module.exports = class Loader {
   constructor (options) {
     this.options = merge({
+      port: 27018,
+      host: 'localhost',
+      database: 'test',
+      path: './tempb/.data',
       drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
       ignore: /^(system|local)\./ // Regex of collection names to ignore
     }, options)
+
+    this.connections = {}
   }
 
+  getMongoURI (databaseName) {
+    return 'mongodb://' + this.options.host + ':' + this.options.port + '/' + databaseName
+  }
   clearCollections (collections) {
-    if (env === 'production') return Promise.reject(new Error('Production mode on - cannot clear database'))
-    return this.getConnection().then(db => {
+    return this.getCurrentConnection().then(db => {
       return this.getCollections().then(names => {
         collections = compact(castArray(collections))
         const filtered = collections.length ? intersection(names, castArray(collections)) : names
@@ -32,18 +40,42 @@ module.exports = class Loader {
     })
   }
 
-  closeConnection () {
-    if (this.connection) return this.connection.close()
+  startServer () {
+    mkdirp.sync(this.options.path)
+
+    const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', this.options.host, '--port', this.options.port, '--dbpath', this.options.path, '--storageEngine', 'ephemeralForTest'])
+
+    return mongodHelper.run()
   }
 
-  getConnection () {
-    if (!this.client)
-      this.client = MongoClient.connect(this.options.uri)
-    return this.client
+  getConnection (databaseName) {
+    if (this.connections[databaseName]) {
+      return Promise.resolve(this.connections[databaseName])
+    } else {
+      return MongoClient.connect(this.getMongoURI(databaseName)).then((connection) => {
+        this.connections[databaseName] = connection
+        return connection
+      })
+    }
+  }
+
+  stopServer () {
+    Object.keys(this.connections).map(databaseName => {
+      this.connections[databaseName].close()
+    })
+
+    return new MongodbPrebuilt.MongoBins('mongo', ['--port', this.port, '--eval', "db.getSiblingDB('admin').shutdownServer()"]).run()
+  }
+  closeConnection () {
+    if (this.client) return this.client.stop()
+  }
+
+  getCurrentConnection () {
+    return this.getConnection(this.options.database)
   }
 
   getCollections () {
-    return this.getConnection().then(db => {
+    return this.getCurrentConnection().then(db => {
       return db.listCollections().toArray().then(names => {
         return names.map(c => {
           return c.name
@@ -56,7 +88,7 @@ module.exports = class Loader {
 
   loadData (data) {
     const collectionNames = Object.keys(data)
-    return this.getConnection().then(db => {
+    return this.getCurrentConnection().then(db => {
       this.connection = db
       const promises = collectionNames.map(name => {
         const collectionData = data[name]

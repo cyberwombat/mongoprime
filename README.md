@@ -1,7 +1,8 @@
 # Mongo Primer
 
 ## Description
-A simple  module for loading fixtures in Mongo for testing.
+A simple  module for loading fixtures in Mongo for testing. It makes use of mongo prebuilt and loads data in memory using ephemeralForTest as the storage engine.
+
 
 ## Installation
 
@@ -10,7 +11,6 @@ A simple  module for loading fixtures in Mongo for testing.
 ## Usage
 
 Setup a fixture named with your collection
-
 
     // fixtures.js
     exports.kittens = [
@@ -22,36 +22,38 @@ Setup a fixture named with your collection
 
 Then in your tests:
 
-    import Loader from 'mongo-primer'
-    import fixtures from './fixtures'
-    
-    let loader
-
-    before(() => {
-      loader = new Loader({ uri: 'mongodb://127.0.0.1/mongoloader' })
-    })
-
-    beforeEach(() => {
-      return loader.clearAndLoad(fixtures)
-    })
-
-    after(() => {
-      return loader.closeConnection()
-    })
-
+    const Loader = require('mongo-primer')
+    const fixtures = require('./fixtures')
+         
+    let loader = new Loader()
+    test.before(t => loader.startServer())
+    test.after(t => loader.stopServer())
+    test.beforeEach(() => loader.clearAndLoad(fixtures))
+ 
 
 ## API
 
-####`clearAndLoad(fixtures)`
+#### 
+`constructor(options)`
+Options:
+
+    port: 27018, // DB port
+    host: 'localhost', // DB host
+    database: 'test', // DB name
+    path: './tempb/.data', // Mongo path to tmp metadata storage
+    drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
+    ignore: /^(system|local)\./ // Regex of collection names to ignore
+
+#### `clearAndLoad(fixtures)`
 Clears given collections and loads fixtures.
 
-####`loadData(fixtures)`
+#### `loadData(fixtures)`
 Load fixture data without removing old entries.
 
-####`clearCollections([collections])`
+#### `clearCollections([collections])`
 Clear all collections or given collections by name if given
 
-**Note:** collections prefixed by _system_ or _local_ are ignored. Additionally, as a safety measure, nothing will happen in production mode (not that this has _ever_ happened to me...)
+**Note:** collections prefixed by _system_ or _local_ are ignored.
 
 ## Fixture format
 
@@ -69,10 +71,11 @@ Multiple collections can be provided at once:
         ...
     }
 
-## Todo
-This is a preliminary release. Needs more tests.
-
 ## Changelog
 
-####0.1.0
-- Add a check to prevent database clearing when in production mode
+#### 0.1.0
+- Add a check to prevent database clearing when in production mode.
+
+#### 0.4.0
+- Switched to mongo prebuild with mem storage.
+- Switched to AVA for tests.

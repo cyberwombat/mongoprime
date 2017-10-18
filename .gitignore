@@ -33,3 +33,6 @@ Icon
 # Thumbnails
 ._*
 
+# Temp db meta
+.db
+.db/*

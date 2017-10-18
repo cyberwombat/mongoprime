@@ -37,14 +37,13 @@ Then in your tests:
 
 ## API
 
-#### 
-`constructor(options)`
+#### `constructor(options)`
 Options:
 
     port: 27018, // DB port
     host: 'localhost', // DB host
     database: 'test', // DB name
-    path: './tempb/.data', // Mongo path to tmp metadata storage
+    path: './.db', // Mongo path to tmp metadata storage
     drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
     ignore: /^(system|local)\./ // Regex of collection names to ignore
 
@@ -75,6 +74,26 @@ Multiple collections can be provided at once:
         ...
     }
 
+## Parallel testing
+In order to accomodate parallel testing a new database is can be created on a per test basis. The name, port and host are loaded in the environment vsariables which can be used to connect to Mongo in you app.
+
+    process.env.MOMGO_PRIMER_DB_PORT
+    process.env.MOMGO_PRIMER_DB_HOST
+    process.env.MOMGO_PRIMER_DB_NAME
+
+If no database name is provided in the constructor then a new name will be created and assigned to `process.env.MOMGO_PRIMER_DB_NAME` upon calling `clearAndLoad`. This function will need to be moved from the `beforeEach` call to the individual tests that require a db connection:
+
+    t('My test', t => {
+       loader.clearAndLoad(fixtures)
+       // The actual test
+    })
+
+The only change required in your app is to set the test database name to use `process.env.MOMGO_PRIMER_DB_NAME`:
+
+Ex:
+
+`mongodb://${process.env.MOMGO_PRIMER_DB_HOST}:${process.env.MOMGO_PRIMER_DB_PORT}/${process.env.MOMGO_PRIMER_DB_NAME}`
+
 ## Changelog
 
 #### 0.1.0
@@ -86,3 +105,7 @@ Multiple collections can be provided at once:
 
 #### 0.4.1
 - Renamed class
+
+### 0.5.0
+- Renamed tmp dir
+- Support for per test database naming for parallel tests.

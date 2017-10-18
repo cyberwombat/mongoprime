@@ -1,6 +1,6 @@
 {
   "name": "mongo-primer",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "A simple fixture loader for in memory Mongo based testing.",
   "main": "index.js",
   "directories": {
@@ -24,7 +24,9 @@
     "integration",
     "testing",
     "unit",
-    "e2e"
+    "e2e",
+    "parallel-testing",
+    "ava"
   ],
   "author": "cyberwombat",
   "license": "ISC",

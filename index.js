@@ -8,13 +8,26 @@ module.exports = class MongoPrimer {
     this.options = merge({
       port: 27018,
       host: 'localhost',
-      database: 'test',
-      path: './tempb/.data',
+      database: null,
+      path: './.db',
       drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
       ignore: /^(system|local)\./ // Regex of collection names to ignore
     }, options)
 
+    process.env.MOMGO_PRIMER_DB_PORT = this.options.port
+    process.env.MOMGO_PRIMER_DB_HOST = this.options.host
+
     this.connections = {}
+  }
+
+  getDatabaseName () {
+    const name = this.options.database ? this.options.database : `test_${Math.floor(Math.random() * 99999) + 100000}`
+    process.env.MOMGO_PRIMER_DB_NAME = name
+    return name
+  }
+
+  setOption (key, value) {
+    this.options[key] = value
   }
 
   getMongoURI (databaseName) {
@@ -52,6 +65,7 @@ module.exports = class MongoPrimer {
     if (this.connections[databaseName]) {
       return Promise.resolve(this.connections[databaseName])
     } else {
+      const databaseName = this.getDatabaseName()
       return MongoClient.connect(this.getMongoURI(databaseName)).then((connection) => {
         this.connections[databaseName] = connection
         return connection
@@ -71,7 +85,7 @@ module.exports = class MongoPrimer {
   }
 
   getCurrentConnection () {
-    return this.getConnection(this.options.database)
+    return this.getConnection(process.env.MOMGO_PRIMER_DB_NAME)
   }
 
   getCollections () {

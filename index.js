@@ -33,43 +33,43 @@ module.exports = class MongoPrimer {
   getMongoURI (databaseName) {
     return 'mongodb://' + this.options.host + ':' + this.options.port + '/' + databaseName
   }
-  clearCollections (collections) {
-    return this.getCurrentConnection().then(db => {
-      return this.getCollections().then(names => {
-        collections = compact(castArray(collections))
-        const filtered = collections.length ? intersection(names, castArray(collections)) : names
-        return Promise.all(filtered.map(name => {
-          return this.options.drop ? db.collection(name).drop() : db.collection(name).remove({})
-        }))
-      })
-    })
+  async clearCollections (collections) {
+    const db = await this.getCurrentConnection()
+    const names = await this.getCollections()
+
+    collections = compact(castArray(collections))
+    const filtered = collections.length ? intersection(names, castArray(collections)) : names
+    return Promise.all(filtered.map(name => {
+      return this.options.drop ? db.collection(name).drop() : db.collection(name).remove({})
+    }))
   }
 
-  clearAndLoad (fixtures) {
+  async clearAndLoad (fixtures) {
     const collections = Object.keys(fixtures)
 
-    return this.clearCollections(collections).then(() => {
-      return this.loadData(fixtures)
-    })
+    await this.clearCollections(collections)
+    return this.loadData(fixtures)
   }
 
-  startServer () {
-    mkdirp.sync(this.options.path)
+  async startServer () {
+    if (!process.env.MOMGO_PRIMER_INIT) {
+      mkdirp.sync(this.options.path)
 
-    const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', this.options.host, '--port', this.options.port, '--dbpath', this.options.path, '--storageEngine', 'ephemeralForTest'])
+      const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', this.options.host, '--port', this.options.port, '--dbpath', this.options.path, '--storageEngine', 'ephemeralForTest'])
 
-    return mongodHelper.run()
+      await mongodHelper.run()
+      process.env.MOMGO_PRIMER_INIT = true
+    }
   }
 
-  getConnection (databaseName) {
+  async getConnection (databaseName) {
     if (this.connections[databaseName]) {
       return Promise.resolve(this.connections[databaseName])
     } else {
       const databaseName = this.getDatabaseName()
-      return MongoClient.connect(this.getMongoURI(databaseName)).then((connection) => {
-        this.connections[databaseName] = connection
-        return connection
-      })
+      const connection = await MongoClient.connect(this.getMongoURI(databaseName))
+      this.connections[databaseName] = connection
+      return connection
     }
   }
 
@@ -88,29 +88,26 @@ module.exports = class MongoPrimer {
     return this.getConnection(process.env.MOMGO_PRIMER_DB_NAME)
   }
 
-  getCollections () {
-    return this.getCurrentConnection().then(db => {
-      return db.listCollections().toArray().then(names => {
-        return names.map(c => {
-          return c.name
-        }).filter(c => {
-          return !c.match(this.options.ignore)
-        })
-      })
+  async getCollections () {
+    const db = await this.getCurrentConnection()
+    const names = await db.listCollections().toArray()
+    return names.map(c => {
+      return c.name
+    }).filter(c => {
+      return !c.match(this.options.ignore)
     })
   }
 
-  loadData (data) {
+  async loadData (data) {
     const collectionNames = Object.keys(data)
-    return this.getCurrentConnection().then(db => {
-      this.connection = db
-      const promises = collectionNames.map(name => {
-        const collectionData = data[name]
-        const items = isArray(collectionData) ? collectionData.slice() : values(collectionData)
-        return this.connection.collection(name).insert(items)
-      })
-
-      return Promise.all(promises)
+    const db = await this.getCurrentConnection()
+    this.connection = db
+    const promises = collectionNames.map(name => {
+      const collectionData = data[name]
+      const items = isArray(collectionData) ? collectionData.slice() : values(collectionData)
+      return this.connection.collection(name).insert(items)
     })
+
+    return Promise.all(promises)
   }
 }

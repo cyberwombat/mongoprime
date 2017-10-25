@@ -109,3 +109,7 @@ Ex:
 ### 0.5.0
 - Renamed tmp dir
 - Support for per test database naming for parallel tests.
+
+### 0.6.0
+- async/await support
+- Check to prevent multi server starts to support test suites without real before/after

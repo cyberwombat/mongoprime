@@ -1,69 +1,60 @@
-# Mongo Primer
+# MongoPrime
 
 ## Description
-A simple module for loading fixtures in Mongo for testing using mongo prebuilt and loads data in memory using ephemeralForTest as the storage engine.
+A module for loading fixtures in Mongo for parallel testing using MongoDB prebuilt and loading data in memory using ephemeralForTest as the storage engine.
 
+MongoPrime has support for parallel testing such as found in [AVA](https://github.com/avajs/ava). It achieves this by creating a proxy that listens to DB requests from your code and determines if the fixtures need to be loaded. A unique database is created for each test. 
 
 ## Installation
 
-    npm i mongo-primer --save-dev
+    npm i mongoprime --save-dev
 
 or:
 
-    yarn add mongo-primer -D
+    yarn add mongoprime -D
 
 ## Usage
 
-Setup a fixture named with your collection:
+In order for this to work you must create a random database name in your code for each test. The database host and port are avalable through the `env` variaables `MONGO_PRIMER_DB_HOST` and `MONGO_PRIMER_DB_PORT`.
 
-    // fixtures.js
-    exports.kittens = [
-      { name: 'Fluffy' },
-      { name: 'Pookie' },
-      { name: 'Lucifer' },
-      { name: 'Bob' }
-    ];
 
-Then in your tests:
+Example:
 
-    const MongoPrimer = require('mongo-primer')
-    const fixtures = require('./fixtures')
-         
-    let loader = new MongoPrimer()
-    test.before(t => loader.startServer())
-    test.after(t => loader.stopServer())
-    test.beforeEach(() => loader.clearAndLoad(fixtures))
- 
+    // yourcode.js
+    const uuid = require('uuid') // you can use any random method you prefer
+    const connection = `mongodb://${process.env.MONGO_PRIMER_DB_HOST}:${process.env.MONGO_PRIMER_DB_PORT}/${uuid()}`
+    // console.log(connection) // ex: mongodb://127.0.0.1:59971/f3abdd14-dce4-4b0c-8db1-5716177aa9b2
 
-## API
+In your test, initialize the proxy in your `before` call (It will ensure it is loaded just once even when used with AVA which calls `before` for each test file).
 
-#### `constructor(options)`
-Options:
+    // test.js
+    const { initProxy } = require('mongoprime')
+    const fixtures = require('./fixtures.js')
+    test.before(async (t) => initProxy({ fixtures })
+    
 
-    port: 27018, // DB port
-    host: 'localhost', // DB host
-    database: 'test', // DB name
-    path: './.db', // Mongo path to tmp metadata storage
-    drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
-    ignore: /^(system|local)\./ // Regex of collection names to ignore
+In some cases your code may be loaded using `require` and you "random" database name will be the same for each test. You can turn debug on to show a log and verify that you are seeing multiple databases being primed for all your tests:
 
-#### `clearAndLoad(fixtures)`
-Clears given collections and loads fixtures.
+    DEBUG=mongoprime yarn test
 
-#### `loadData(fixtures)`
-Load fixture data without removing old entries.
+Look for multiple entries such as:
 
-#### `clearCollections([collections])`
-Clear all collections or given collections by name if given
+    mongoprime Priming 1169f9ef-7803-49f8-890c-5af0d4f78eba
 
-**Note:** collections prefixed by _system_ or _local_ are ignored.
+If you find that your tests do not show different generated name you will need to clear the require cache with some of the relevant modules such as:
+
+- [clear-module](https://github.com/sindresorhus/clear-module)
+- [import-fresh](https://github.com/sindresorhus/import-fresh)
+- [exige](https://github.com/cyberwombat/exige) (works with `node-config`)
+
+*Note*: requires `node >= 7.6.0`
 
 ## Fixture format
 
 Fixtures should in the form of:
     
     const fixtures = {
-        collectioname: [{ name: 'Entry 1'}, { name: 'Entry 2'}, ...]
+        collectionName: [{ name: 'Entry 1'}, { name: 'Entry 2'}, ...]
     }
 
 Multiple collections can be provided at once:
@@ -74,42 +65,33 @@ Multiple collections can be provided at once:
         ...
     }
 
-## Parallel testing
-In order to accomodate parallel testing a new database is can be created on a per test basis. The name, port and host are loaded in the environment vsariables which can be used to connect to Mongo in you app.
+You can use `ObjectId` to establish relationships:
 
-    process.env.MOMGO_PRIMER_DB_PORT
-    process.env.MOMGO_PRIMER_DB_HOST
-    process.env.MOMGO_PRIMER_DB_NAME
+    // fixtures.js
+    const { ObjectId } = require('mongoprimer') 
+    const users = [{ 
+        _id: ObjectId()
+        name: 'Harry Potter'
+    }, { 
+        _id: ObjectId(),
+        name: 'Voldermort'
+    }]
 
-If no database name is provided in the constructor then a new name will be created and assigned to `process.env.MOMGO_PRIMER_DB_NAME` upon calling `clearAndLoad`. This function will need to be moved from the `beforeEach` call to the individual tests that require a db connection:
+    const horcruxes = [{
+        name: 'diadem'
+        user: users[0]._id
+    }]
 
-    t('My test', t => {
-       loader.clearAndLoad(fixtures)
-       // The actual test
-    })
+    const fixtures = { users, horcruxes }
 
-The only change required in your app is to set the test database name to use `process.env.MOMGO_PRIMER_DB_NAME`:
+    module.exports = fixtures
 
-Ex:
 
-`mongodb://${process.env.MOMGO_PRIMER_DB_HOST}:${process.env.MOMGO_PRIMER_DB_PORT}/${process.env.MOMGO_PRIMER_DB_NAME}`
+## API
 
-## Changelog
-
-#### 0.1.0
-- Add a check to prevent database clearing when in production mode.
-
-#### 0.4.0
-- Switched to mongo prebuild with mem storage.
-- Switched to AVA for tests.
-
-#### 0.4.1
-- Renamed class
-
-### 0.5.0
-- Renamed tmp dir
-- Support for per test database naming for parallel tests.
-
-### 0.6.0
-- async/await support
-- Check to prevent multi server starts to support test suites without real before/after
+#### `initProxy(options)`
+Options:
+    
+    fixtures: {}, // Required - Collection of fixtures to load
+    host: '127.0.0.1', // DB host
+    ignore: ['admin', 'system', 'local'] // Collection names to ignore

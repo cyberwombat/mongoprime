@@ -1,37 +1,23 @@
 const test = require('ava')
-const MongoPrimer = require('../../index')
+const { initProxy } = require('../../index')
 const fixtures = require('../fixtures')
+const { MongoClient } = require('mongodb')
+const uuid = require('uuid')
 
-let loader = new MongoPrimer()
+test.before(async () => initProxy({ fixtures }))
 
-test.before(() => loader.startServer())
-
-test.after(() => loader.stopServer())
-
-test.serial('should load a single fixture', (t) => {
-  return loader.clearAndLoad({ kittens: fixtures.kittens }).then(() => {
-    return loader.getCurrentConnection().then(db => {
-      return db.collection('kittens').find().toArray().then(kittens => {
-        t.is(kittens.length, 4)
-      }).then(() => {
-        return loader.getCollections().then(names => {
-          t.deepEqual(names, ['kittens'])
-        })
-      })
-    })
-  })
+test(async (t) => {
+  let c = await MongoClient.connect(`mongodb://${process.env.MONGO_PRIMER_DB_HOST}:${process.env.MONGO_PRIMER_DB_PORT}/${uuid()}`)
+  let collection = c.collection('puppies')
+  await collection.insertOne({ name: 'Bo' })
+  let count = await collection.find().count()
+  t.is(count, 4)
 })
 
-test.serial('should load multiple fixture', (t) => {
-  return loader.clearAndLoad(fixtures).then(() => {
-    return loader.getCurrentConnection().then(db => {
-      return db.collection('kittens').find().toArray().then(kittens => {
-        t.is(kittens.length, 4)
-      }).then(() => {
-        return loader.getCollections().then(names => {
-          t.deepEqual(names.sort(), ['kittens', 'puppies'])
-        })
-      })
-    })
-  })
+test(async (t) => {
+  let c = await MongoClient.connect(`mongodb://${process.env.MONGO_PRIMER_DB_HOST}:${process.env.MONGO_PRIMER_DB_PORT}/${uuid()}`)
+  let collection = c.collection('puppies')
+  let count = await collection.find().count()
+  t.is(count, 3)
 })
+

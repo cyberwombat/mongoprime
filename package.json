@@ -1,7 +1,7 @@
 {
-  "name": "mongo-primer",
+  "name": "mongoprime",
   "version": "0.6.0",
-  "description": "A simple fixture loader for in memory Mongo based testing.",
+  "description": "A fixture loader for in memory Mongo based parallel testing.",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -10,17 +10,19 @@
     "node": ">= 7.6.0"
   },
   "dependencies": {
-    "lodash": "^4.15.0",
-    "mkdirp": "^0.5.1",
+    "mongo-wire-protocol": "^1.0.0",
     "mongodb-prebuilt": "^6.3.3"
   },
   "devDependencies": {
-    "ava": "^0.22.0"
+    "ava": "^0.22.0",
+    "mongodb": "^2.2.33"
   },
   "scripts": {
     "test": "ava test/unit/index.spec.js"
   },
   "keywords": [
+    "parallel",
+    "mocha",
     "mongo",
     "mongoose",
     "fixtures",
@@ -33,12 +35,12 @@
   ],
   "author": "cyberwombat",
   "license": "ISC",
-  "homepage": "https://github.com/cyberwombat/mongo-primer",
+  "homepage": "https://github.com/cyberwombat/mongoprime",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cyberwombat/mongo-primer.git"
+    "url": "git+https://github.com/cyberwombat/mongoprime.git"
   },
   "bugs": {
-    "url": "https://github.com/cyberwombat/mongo-primer/issues"
+    "url": "https://github.com/cyberwombat/mongoprime/issues"
   }
 }

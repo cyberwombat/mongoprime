@@ -1,113 +1,178 @@
-const { MongoClient } = require('mongodb')
-const mkdirp = require('mkdirp')
+const { MongoClient, ObjectId } = require('mongodb')
+const net = require('net')
+const debug = require('debug')('mongoprime')
+const uniqueTempDir = require('unique-temp-dir')
 const MongodbPrebuilt = require('mongodb-prebuilt')
-const { isArray, castArray, values, intersection, compact, merge } = require('lodash')
+const process = require('process')
+const getPort = require('get-port')
+const MongoWireProtocol = require('mongo-wire-protocol')
 
-module.exports = class MongoPrimer {
-  constructor (options) {
-    this.options = merge({
-      port: 27018,
-      host: 'localhost',
-      database: null,
-      path: './.db',
-      drop: false, // Drop collections instead of emptying them (drop() vs remove({}))
-      ignore: /^(system|local)\./ // Regex of collection names to ignore
-    }, options)
+let options = {
+  fixtures: {},
+  host: '127.0.0.1',
+  ignore: ['system', 'admin', 'local'] 
+}
 
-    process.env.MOMGO_PRIMER_DB_PORT = this.options.port
-    process.env.MOMGO_PRIMER_DB_HOST = this.options.host
+let ports = {
+  mongo: 0,
+  proxy: 0
+}
 
-    this.connections = {}
-  }
+let initialized = false
+let connections = {}
+let primed = []
 
-  getDatabaseName () {
-    const name = this.options.database ? this.options.database : `test_${Math.floor(Math.random() * 99999) + 100000}`
-    process.env.MOMGO_PRIMER_DB_NAME = name
-    return name
-  }
+const startProxy = async () => {
+  const server = net.createServer()
 
-  setOption (key, value) {
-    this.options[key] = value
-  }
+  server.on('connection', (socket) => {
+    debug('New connection received')
+    var request = new MongoWireProtocol()
+    socket.on('data', async (chunk) => {
+      if (request.finished) {
+        request = new MongoWireProtocol()
+      }
+      request.parse(chunk)
+      if (!request.finished) {
 
-  getMongoURI (databaseName) {
-    return 'mongodb://' + this.options.host + ':' + this.options.port + '/' + databaseName
-  }
-  async clearCollections (collections) {
-    const db = await this.getCurrentConnection()
-    const names = await this.getCollections()
+      }
+      const database = request.fullCollectionName.replace('.$cmd', '')
 
-    collections = compact(castArray(collections))
-    const filtered = collections.length ? intersection(names, castArray(collections)) : names
-    return Promise.all(filtered.map(name => {
-      return this.options.drop ? db.collection(name).drop() : db.collection(name).remove({})
-    }))
-  }
+      await primeDatabase(database)
 
-  async clearAndLoad (fixtures) {
-    const collections = Object.keys(fixtures)
-
-    await this.clearCollections(collections)
-    return this.loadData(fixtures)
-  }
-
-  async startServer () {
-    if (!process.env.MOMGO_PRIMER_INIT) {
-      mkdirp.sync(this.options.path)
-
-      const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', this.options.host, '--port', this.options.port, '--dbpath', this.options.path, '--storageEngine', 'ephemeralForTest'])
-
-      await mongodHelper.run()
-      process.env.MOMGO_PRIMER_INIT = true
-    }
-  }
-
-  async getConnection (databaseName) {
-    if (this.connections[databaseName]) {
-      return Promise.resolve(this.connections[databaseName])
-    } else {
-      const databaseName = this.getDatabaseName()
-      const connection = await MongoClient.connect(this.getMongoURI(databaseName))
-      this.connections[databaseName] = connection
-      return connection
-    }
-  }
-
-  stopServer () {
-    Object.keys(this.connections).map(databaseName => {
-      this.connections[databaseName].close()
+      forwardRequest(socket, chunk, database)
     })
 
-    return new MongodbPrebuilt.MongoBins('mongo', ['--port', this.port, '--eval', "db.getSiblingDB('admin').shutdownServer()"]).run()
-  }
-  closeConnection () {
-    if (this.client) return this.client.stop()
-  }
-
-  getCurrentConnection () {
-    return this.getConnection(process.env.MOMGO_PRIMER_DB_NAME)
-  }
-
-  async getCollections () {
-    const db = await this.getCurrentConnection()
-    const names = await db.listCollections().toArray()
-    return names.map(c => {
-      return c.name
-    }).filter(c => {
-      return !c.match(this.options.ignore)
+    socket.on('error', error => {
+      console.error(error)
     })
-  }
-
-  async loadData (data) {
-    const collectionNames = Object.keys(data)
-    const db = await this.getCurrentConnection()
-    this.connection = db
-    const promises = collectionNames.map(name => {
-      const collectionData = data[name]
-      const items = isArray(collectionData) ? collectionData.slice() : values(collectionData)
-      return this.connection.collection(name).insert(items)
+    socket.on('close', () => {
+      debug('Connection closed')
     })
+  })
 
-    return Promise.all(promises)
+  server.on('listening', () => {
+    debug('Server started')
+  })
+
+  server.listen({port: ports.proxy, host: options.host})
+}
+
+const forwardRequest = (socket, chunk, database) => {
+  const serviceSocket = new net.Socket()
+  serviceSocket.connect(ports.mongo, options.host, function () {
+    debug(`Forwarding data to ${database}`)
+    serviceSocket.write(chunk)
+  })
+  serviceSocket.on('end', function () {
+
+  })
+  serviceSocket.on('data', function (data) {
+    debug(`Receiving data from ${database}`)
+
+    socket.write(data)
+    // socket.end()
+  })
+}
+
+const primeDatabase = async (database) => {
+  if (!!~options.ignore.indexOf(database) || !!~primed.indexOf(database)) return
+
+  primed.push(database)
+  debug(`Priming ${database}`)
+  await clearCollections(database)
+
+  await loadFixtures(database)
+}
+
+const initProxy = async (params) => {
+  if (initialized) return
+
+  options = Object.assign(options, params)
+
+  ports.mongo = await getPort()
+  ports.proxy = await getPort()
+  options.path = uniqueTempDir({ create: true })
+
+  await startServer()
+  await startProxy()
+
+  process.env.MONGO_PRIMER_DB_PORT = ports.proxy
+  process.env.MONGO_PRIMER_DB_HOST = options.host
+
+  initialized = true
+}
+
+const getUri = (databaseName) => {
+  return 'mongodb://' + options.host + ':' + ports.mongo + '/' + databaseName
+}
+const clearCollections = async (database) => {
+  const db = await getConnection(database)
+
+  const names = await listCollections(database)
+
+  const filtered = Object.keys(options.fixtures).filter(c => ~names.indexOf(c))
+
+  return Promise.all(filtered.map(name => {
+    return db.collection(name).drop()
+  }))
+}
+
+const startServer = async () => {
+  const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', options.host, '--port', ports.mongo, '--dbpath', options.path, '--storageEngine', 'ephemeralForTest'])
+
+  await mongodHelper.run()
+}
+
+const getConnection = async (database) => {
+  if (connections[database]) {
+    debug(`Reusing ${database} connection`)
+    return Promise.resolve(connections[database])
+  } else {
+    const url = getUri(database)
+
+    connections[database] = await MongoClient.connect(url)
+
+    return connections[database]
   }
 }
+
+const stopServer = async () => {
+  Object.keys(connections).map(databaseName => {
+    connections[databaseName].close()
+  })
+
+  return new MongodbPrebuilt.MongoBins('mongo', ['--port', ports.mongo, '--eval', "db.getSiblingDB('admin').shutdownServer()"]).run()
+}
+
+const closeAll = async (database) => {
+  const db = await getConnection(database)
+  db.stop()
+}
+
+const listCollections = async (database) => {
+  const db = await getConnection(database)
+
+  const names = await db.listCollections().toArray()
+  return names.map(c => {
+    return c.name
+  }).filter(c => {
+    return !c.match(options.ignore)
+  })
+}
+
+const loadFixtures = async (database) => {
+  const db = await getConnection(database)
+
+  const promises = Object.keys(options.fixtures).map(name => {
+    const items = options.fixtures[name]
+    return db.collection(name).insert(items)
+  })
+
+  return Promise.all(promises)
+}
+
+exports.initProxy = initProxy
+exports.stopServer = stopServer
+exports.closeAll = closeAll
+exports.ObjectId = ObjectId

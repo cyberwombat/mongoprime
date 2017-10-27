@@ -8,14 +8,12 @@ const getPort = require('get-port')
 const MongoWireProtocol = require('mongo-wire-protocol')
 
 let options = {
-  fixtures: {},
-  host: '127.0.0.1',
-  ignore: ['system', 'admin', 'local'] 
-}
-
-let ports = {
-  mongo: 0,
-  proxy: 0
+  fixtures: {}, // Fixture collection
+  host: '127.0.0.1', // Proxy host
+  port: 27018, // Proxy port
+  ignore: ['system', 'admin', 'local'], // Collections to ignore
+  path: null, // Path for mongo metadata - defaults to randomly generated systm tmp dir
+  mongo: null // Mongo port - randomly generated
 }
 
 let initialized = false
@@ -55,12 +53,12 @@ const startProxy = async () => {
     debug('Server started')
   })
 
-  server.listen({port: ports.proxy, host: options.host})
+  server.listen({port: options.port, host: options.host})
 }
 
 const forwardRequest = (socket, chunk, database) => {
   const serviceSocket = new net.Socket()
-  serviceSocket.connect(ports.mongo, options.host, function () {
+  serviceSocket.connect(options.mongo, options.host, function () {
     debug(`Forwarding data to ${database}`)
     serviceSocket.write(chunk)
   })
@@ -90,21 +88,20 @@ const initProxy = async (params) => {
 
   options = Object.assign(options, params)
 
-  ports.mongo = await getPort()
-  ports.proxy = await getPort()
-  options.path = uniqueTempDir({ create: true })
+  options.mongo = await getPort()
+  options.path = options.path || uniqueTempDir({ create: true })
 
   await startServer()
   await startProxy()
 
-  process.env.MONGO_PRIMER_DB_PORT = ports.proxy
+  process.env.MONGO_PRIMER_DB_PORT = options.port
   process.env.MONGO_PRIMER_DB_HOST = options.host
 
   initialized = true
 }
 
 const getUri = (databaseName) => {
-  return 'mongodb://' + options.host + ':' + ports.mongo + '/' + databaseName
+  return 'mongodb://' + options.host + ':' + options.mongo + '/' + databaseName
 }
 const clearCollections = async (database) => {
   const db = await getConnection(database)
@@ -119,7 +116,7 @@ const clearCollections = async (database) => {
 }
 
 const startServer = async () => {
-  const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', options.host, '--port', ports.mongo, '--dbpath', options.path, '--storageEngine', 'ephemeralForTest'])
+  const mongodHelper = new MongodbPrebuilt.MongodHelper(['--bind_ip', options.host, '--port', options.mongo, '--dbpath', options.path, '--storageEngine', 'ephemeralForTest'])
 
   await mongodHelper.run()
 }
@@ -142,7 +139,7 @@ const stopServer = async () => {
     connections[databaseName].close()
   })
 
-  return new MongodbPrebuilt.MongoBins('mongo', ['--port', ports.mongo, '--eval', "db.getSiblingDB('admin').shutdownServer()"]).run()
+  return new MongodbPrebuilt.MongoBins('mongo', ['--port', options.mongo, '--eval', "db.getSiblingDB('admin').shutdownServer()"]).run()
 }
 
 const closeAll = async (database) => {

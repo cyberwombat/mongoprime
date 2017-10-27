@@ -15,7 +15,7 @@ test(async (t) => {
 })
 
 test(async (t) => {
-  let c = await MongoClient.connect(`mongodb://${process.env.MONGO_PRIMER_DB_HOST}:${process.env.MONGO_PRIMER_DB_PORT}/${uuid()}`)
+  let c = await MongoClient.connect(`mongodb://127.0.0.1:27018/${uuid()}`)
   let collection = c.collection('puppies')
   let count = await collection.find().count()
   t.is(count, 3)

@@ -15,7 +15,7 @@ or:
 
 ## Usage
 
-In order for this to work you must create a random database name in your code for each test. The database host and port are avalable through the `env` variaables `MONGO_PRIMER_DB_HOST` and `MONGO_PRIMER_DB_PORT`.
+In order for this to work you must create a random database name in your code for each test. The database host and port are avalable through the `env` variaables `MONGO_PRIMER_DB_HOST` and `MONGO_PRIMER_DB_PORT` if you load your code during the tests. Else they can be hardcoded (defaults to 127.0.0.1:27018 - can be changed in runtime options).
 
 
 Example:
@@ -92,6 +92,8 @@ You can use `ObjectId` to establish relationships:
 #### `initProxy(options)`
 Options:
     
-    fixtures: {}, // Required - Collection of fixtures to load
-    host: '127.0.0.1', // DB host
-    ignore: ['admin', 'system', 'local'] // Collection names to ignore
+    fixtures: {}, // Fixture collection
+    host: '127.0.0.1', // Proxy host
+    port: 27018, // Proxy port
+    ignore: ['system', 'admin', 'local'], // Collections to ignore
+    path: null // Path for mongo metadata - defaults to randomly generated systm tmp dir

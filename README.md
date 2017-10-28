@@ -45,7 +45,7 @@ If you find that your tests do not show different generated name you will need t
 
 - [clear-module](https://github.com/sindresorhus/clear-module)
 - [import-fresh](https://github.com/sindresorhus/import-fresh)
-- [exige](https://github.com/cyberwombat/exige) (works with `node-config`)
+- [freshload](https://github.com/cyberwombat/freshload) (works with `node-config`)
 
 *Note*: requires `node >= 7.6.0`
 

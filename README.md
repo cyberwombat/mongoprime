@@ -1,4 +1,5 @@
 # MongoPrime
+<p align="center"><img src="./icon.png" /></p>
 
 ## Description
 A module for loading fixtures in Mongo for parallel testing using MongoDB prebuilt and loading data in memory using ephemeralForTest as the storage engine.

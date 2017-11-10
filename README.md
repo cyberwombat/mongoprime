@@ -41,11 +41,7 @@ Look for multiple entries such as:
 
     mongoprime Priming 1169f9ef-7803-49f8-890c-5af0d4f78eba
 
-If you find that your tests do not show different generated name you will need to clear the require cache with some of the relevant modules such as:
-
-- [clear-module](https://github.com/sindresorhus/clear-module)
-- [import-fresh](https://github.com/sindresorhus/import-fresh)
-- [freshload](https://github.com/cyberwombat/freshload) (works with `node-config`)
+If you find that your tests do not show different generated name you will need to find a way create and assign a unique database name for each test.
 
 *Note*: requires `node >= 7.6.0`
 

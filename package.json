@@ -1,6 +1,6 @@
 {
   "name": "mongoprime",
-  "version": "0.8.2",
+  "version": "0.8.4",
   "description": "In memory MongoDB fixture loader for parallel testing.",
   "main": "index.js",
   "directories": {

@@ -6,6 +6,7 @@ const MongodbPrebuilt = require('mongodb-prebuilt')
 const process = require('process')
 const getPort = require('get-port')
 const MongoWireProtocol = require('mongo-wire-protocol')
+const uuid = require('uuid')
 
 let options = {
   fixtures: {}, // Fixture collection
@@ -54,6 +55,10 @@ const startProxy = async () => {
   })
 
   server.listen({port: options.port, host: options.host})
+}
+
+const generateURL = () => {
+   return `mongodb://${options.host}:${options.port}/${uuid()}`
 }
 
 const forwardRequest = (socket, chunk, database) => {
@@ -169,6 +174,7 @@ const loadFixtures = async (database) => {
   return Promise.all(promises)
 }
 
+exports.generateURL = generateURL
 exports.initProxy = initProxy
 exports.stopServer = stopServer
 exports.closeAll = closeAll

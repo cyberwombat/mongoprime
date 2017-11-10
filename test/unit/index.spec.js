@@ -1,5 +1,5 @@
 const test = require('ava')
-const { initProxy } = require('../../index')
+const { initProxy, generateURL } = require('../../index')
 const fixtures = require('../fixtures')
 const { MongoClient } = require('mongodb')
 const uuid = require('uuid')
@@ -20,4 +20,13 @@ test(async (t) => {
   let count = await collection.find().count()
   t.is(count, 3)
 })
+
+test(t => {
+  const a = generateURL()
+  const b = generateURL()
+  t.not(a, b)
+  t.regex(a, /mongodb:\/\/.*:\d+\/(\w{8}(-\w{4}){3}-\w{12}?)/)
+})
+
+
 

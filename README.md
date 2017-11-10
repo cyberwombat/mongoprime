@@ -93,3 +93,6 @@ Options:
     port: 27018, // Proxy port
     ignore: ['system', 'admin', 'local'], // Collections to ignore
     path: null // Path for mongo metadata - defaults to randomly generated systm tmp dir
+
+### `generateURL()`
+Convenience method to create a new unique connection string using uuids.

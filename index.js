@@ -57,9 +57,7 @@ const startProxy = async () => {
   server.listen({port: options.port, host: options.host})
 }
 
-const generateURL = () => {
-   return `mongodb://${options.host}:${options.port}/${uuid()}`
-}
+const generateURL = () => `mongodb://${options.host}:${options.port}/${uuid()}`
 
 const forwardRequest = (socket, chunk, database) => {
   const serviceSocket = new net.Socket()
@@ -168,7 +166,9 @@ const loadFixtures = async (database) => {
 
   const promises = Object.keys(options.fixtures).map(name => {
     const items = options.fixtures[name]
-    return db.collection(name).insert(items)
+
+    // Ensure there is something else we get and Invalid Operation, no operations specified error
+    if (items.length) { return db.collection(name).insert(items) }
   })
 
   return Promise.all(promises)

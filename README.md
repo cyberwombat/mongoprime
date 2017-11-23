@@ -44,6 +44,8 @@ Look for multiple entries such as:
 
 If you find that your tests do not show different generated name you will need to find a way create and assign a unique database name for each test.
 
+Ensure you are cleaning the require cache in your tests using modules such as [import-fresh](https://github.com/sindresorhus/import-fresh) and potentially [clear-module](https://github.com/sindresorhus/clear-module) with `clear.all()` if you are using things like `node-config` to store your test URI.
+
 *Note*: requires `node >= 7.6.0`
 
 ## Fixture format

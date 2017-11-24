@@ -34,7 +34,7 @@ In your test, initialize the proxy in your `before` call (It will ensure it is l
     test.before(async (t) => initProxy({ fixtures })
     
 
-In some cases your code may be loaded using `require` and you "random" database name will be the same for each test. You can turn debug on to show a log and verify that you are seeing multiple databases being primed for all your tests:
+In some cases your code may be loaded using `require` and your "random" database name will be the same for each test. You can turn debug on to show a log and verify that you are seeing multiple databases being primed for all your tests:
 
     DEBUG=mongoprime yarn test
 
@@ -44,9 +44,50 @@ Look for multiple entries such as:
 
 If you find that your tests do not show different generated name you will need to find a way create and assign a unique database name for each test.
 
-Ensure you are cleaning the require cache in your tests using modules such as [import-fresh](https://github.com/sindresorhus/import-fresh) and potentially [clear-module](https://github.com/sindresorhus/clear-module) with `clear.all()` if you are using things like `node-config` to store your test URI.
+To acheve this ensure you are cleaning the require cache in your tests using modules such as [import-fresh](https://github.com/sindresorhus/import-fresh) and potentially [clear-module](https://github.com/sindresorhus/clear-module) with `clear.all()` if you are using things like `node-config` to store your test URI.
 
-*Note*: requires `node >= 7.6.0`
+##### Examples
+
+    // Some db fetching code - i.e. whatever.js
+    const uuid = require('uuid')
+    // Create a random URI
+    const uri = `mongodb://127.0.0.1:27018/${uuid()}`
+    // Connect to Mongo
+    ....
+    // Cool function that fetchs amazing things from db using fixtures
+    const fetchSomething = async () => { 
+      ...
+    }
+
+    // Test file - i.e. things.spec.js
+    const fresh = require('import-fresh')
+    test(async t => {
+      const { fetchSomething } = fresh('../../lib/whatever')
+      const things = await fetchSomething()
+      t.is(things.length, 1)  
+    })
+
+
+In some cases such as when using [node-config](https://github.com/lorenwest/node-config) which generates immutables, the db name may persist in which case you need to do a deep clear.
+
+    // Sample node-config file - i.e. testjs
+    const uuid = require('uuid')
+    module.exports = {
+      db: {
+        connection: `mongodb://127.0.0.1:27018/${uuid()}`
+      }
+    }
+
+    // Test file - i.e. things.spec.js
+    const fresh = require('import-fresh')
+    const clear = require('clear-module')
+    test(async t => {
+      clear.all('config')
+      const { fetchSomething } = fresh('../../lib/whatever')
+      const things = await fetchSomething()
+      t.is(things.length, 1)  
+    })
+
 
 ## Fixture format
 
@@ -59,8 +100,8 @@ Fixtures should in the form of:
 Multiple collections can be provided at once:
 
     const fixtures = {
-        collection1: [],
-        collection2: [],
+        collection1: [{...}],
+        collection2: [{...}],
         ...
     }
 
@@ -85,6 +126,13 @@ You can use `ObjectId` to establish relationships:
 
     module.exports = fixtures
 
+If you just want to clear your db between tests you can provide empty collections:
+
+    const fixtures = {
+        collection1: [], // No fixtures provide so will just be cleared
+        collection2: [{....}],
+        ...
+    }
 
 ## API
 
@@ -97,5 +145,12 @@ Options:
     ignore: ['system', 'admin', 'local'], // Collections to ignore
     path: null // Path for mongo metadata - defaults to randomly generated systm tmp dir
 
-### `generateURL()`
+#### `generateURL()`
 Convenience method to create a new unique connection string using uuids.
+
+##### Example
+    const uri = generateURL() 
+    // ex: mongodb://127.0.0.1:59971/3abdd14-dce4-4b0c-8db1-5716177aa9b2
+
+#### `ObjectID`
+Convenience function from Mongo to create/cast ObjectIDs in your fixtures.

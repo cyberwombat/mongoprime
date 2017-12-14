@@ -154,3 +154,8 @@ Convenience method to create a new unique connection string using uuids.
 
 #### `ObjectID`
 Convenience function from Mongo to create/cast ObjectIDs in your fixtures.
+
+## Changelog
+
+####2.0.0
+- Upgrade to Mongodb 3.x

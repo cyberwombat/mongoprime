@@ -1,6 +1,6 @@
 {
   "name": "mongoprime",
-  "version": "0.9.3",
+  "version": "2.0.0",
   "description": "In memory MongoDB fixture loader for parallel testing.",
   "main": "index.js",
   "directories": {
@@ -10,13 +10,14 @@
     "node": ">= 7.6.0"
   },
   "dependencies": {
+    "mongo": "^0.1.0",
     "mongo-wire-protocol": "^1.0.0",
+    "mongodb": "^3.0.0-rc0",
     "mongodb-prebuilt": "^6.3.3",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "ava": "^0.22.0",
-    "mongodb": "^2.2.33"
+    "ava": "^0.22.0"
   },
   "scripts": {
     "test": "ava test/unit/index.spec.js"

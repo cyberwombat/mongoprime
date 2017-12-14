@@ -57,7 +57,12 @@ const startProxy = async () => {
   server.listen({port: options.port, host: options.host})
 }
 
-const generateURL = () => `mongodb://${options.host}:${options.port}/${uuid()}`
+const generateURL = () => {
+  return {
+    host: `mongodb://${options.host}:${options.port}`,
+    db: uuid()
+  }
+}
 
 const forwardRequest = (socket, chunk, database) => {
   const serviceSocket = new net.Socket()
@@ -104,7 +109,10 @@ const initProxy = async (params) => {
 }
 
 const getUri = (databaseName) => {
-  return 'mongodb://' + options.host + ':' + options.mongo + '/' + databaseName
+  return {
+    host: 'mongodb://' + options.host + ':' + options.mongo,
+    db: databaseName
+  }
 }
 const clearCollections = async (database) => {
   const db = await getConnection(database)
@@ -129,9 +137,10 @@ const getConnection = async (database) => {
     debug(`Reusing ${database} connection`)
     return Promise.resolve(connections[database])
   } else {
-    const url = getUri(database)
+    const { host, db } = getUri(database)
 
-    connections[database] = await MongoClient.connect(url)
+    const con = await MongoClient.connect(host)
+    connections[database] = con.db(db)
 
     return connections[database]
   }
